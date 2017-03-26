@@ -5,15 +5,21 @@ import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.Toast;
 
 import com.musicsample.R;
+import com.musicsample.adapter.MusicAdapter;
 import com.musicsample.model.Song;
 import com.musicsample.utility.CSVReader;
 
@@ -24,11 +30,20 @@ import java.util.HashMap;
 public class MainActivity extends AppCompatActivity {
 
     SharedPreferences prefs = null;
-    HashMap<String,ArrayList<String>> artistSongMap;
+     HashMap<String,ArrayList<String>> artistSongMap;
     HashMap<String,ArrayList<String>> albumSongMap;
     ArrayList<Song> songDetailList;
-
+    ArrayList<String> artistList;
+    ArrayList<String> albumList;
     static boolean debug = true;
+    public static int noOfRows = 1;
+    // mainSpinnerSelection = 0 artist, 1 album
+    static  int mainSpinnerSelection = 0;
+    RecyclerView recyclerView;
+    RecyclerView.Adapter recyclerViewAdapter;
+    RecyclerView.LayoutManager recyclerViewLayoutManager;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -40,15 +55,78 @@ public class MainActivity extends AppCompatActivity {
         LayoutInflater mInflater = LayoutInflater.from(this);
 
         View mCustomView = mInflater.inflate(R.layout.custom_action_bar, null);
-        Spinner mainSpinner = (Spinner) mCustomView.findViewById(R.id.main_spinner);
+        final Spinner mainSpinner = (Spinner) mCustomView.findViewById(R.id.main_spinner);
 
         ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
                 R.array.spinner_list_item_array, android.R.layout.simple_spinner_item);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 
         mainSpinner.setAdapter(adapter);
+        mainSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                if(position == 0)
+                {
+                    mainSpinnerSelection = 0;
+                    recyclerViewAdapter = new MusicAdapter(artistList,artistSongMap);
+                    recyclerView.setAdapter(recyclerViewAdapter);
+                }
+                else if(position == 1){
+                    mainSpinnerSelection = 1;
+                    recyclerViewAdapter = new MusicAdapter(albumList,albumSongMap);
+                    recyclerView.setAdapter(recyclerViewAdapter);
+                }
+            }
 
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                MainActivity.log("Nothing selected");
+            }
+
+        });
         Spinner countSpinner = (Spinner) mCustomView.findViewById(R.id.count_spinner);
+        countSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+                switch (position){
+                    case 0:
+                        noOfRows = 1;
+                        break;
+                    case 1:
+                        noOfRows = 2;
+                        break;
+                    case 2:
+                        noOfRows = 3;
+                        break;
+                    case 3:
+                        noOfRows = 4;
+                        break;
+                    case 4:
+                        noOfRows = 5;
+                        break;
+                    default:
+                        noOfRows = 1;
+                                break;
+
+                }
+                if(mainSpinnerSelection == 0){
+                    recyclerViewAdapter = new MusicAdapter(artistList,artistSongMap);
+                    recyclerView.setAdapter(recyclerViewAdapter);
+                }
+                else{
+                    recyclerViewAdapter = new MusicAdapter(albumList,albumSongMap);
+                    recyclerView.setAdapter(recyclerViewAdapter);
+                }
+
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parentView) {
+                MainActivity.log("Nothing selected");
+            }
+
+        });
+
         ArrayAdapter<CharSequence> counAdapter = ArrayAdapter.createFromResource(this,
                 R.array.count_spinner_list_item_array, android.R.layout.simple_spinner_item);
         counAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
@@ -62,6 +140,14 @@ public class MainActivity extends AppCompatActivity {
         artistSongMap = new HashMap<>();
         albumSongMap = new HashMap<>();
         songDetailList = new ArrayList<Song>();
+        artistList = new ArrayList<String>();
+        albumList = new ArrayList<String>();
+
+        recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+        recyclerViewLayoutManager = new LinearLayoutManager(this);
+        recyclerViewLayoutManager.setAutoMeasureEnabled(true);
+        recyclerView.setLayoutManager(recyclerViewLayoutManager);
+
     }
 
 
@@ -84,35 +170,10 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+        recyclerViewAdapter = new MusicAdapter(artistList,artistSongMap);
+        recyclerView.setAdapter(recyclerViewAdapter);
     }
 
-//    @Override
-//    public boolean onCreateOptionsMenu(Menu menu) {
-//        getMenuInflater().inflate(R.menu.main_menu, menu);
-//
-//        MenuItem item = menu.findItem(R.id.spinner);
-//        Spinner spinner = (Spinner) MenuItemCompat.getActionView(item);
-//
-//        ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
-//                R.array.spinner_list_item_array, android.R.layout.simple_spinner_item);
-//        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//
-//        spinner.setAdapter(adapter);
-//
-//        getMenuInflater().inflate(R.menu.count_menu, menu);
-//
-//        MenuItem countItem = menu.findItem(R.id.count_spinner);
-//        Spinner countSpinner = (Spinner) MenuItemCompat.getActionView(item);
-//
-//        ArrayAdapter<CharSequence> counAdapter = ArrayAdapter.createFromResource(this,
-//                R.array.count_spinner_list_item_array, android.R.layout.simple_spinner_item);
-//        counAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-//
-//        spinner.setAdapter(counAdapter);
-//
-//
-//        return true;
-//    }
     void parseCsvData(ArrayList<String[]> content){
 
         if(content!= null && content.size()>0){
@@ -132,6 +193,7 @@ public class MainActivity extends AppCompatActivity {
                     ArrayList<String> songs = new ArrayList<>();
                     songs.add(sname);
                     artistSongMap.put(sartist,songs);
+                    artistList.add(sartist);
                 }
                 if(albumSongMap.containsKey(salbum)){
                     albumSongMap.get(salbum).add(sname);
@@ -139,23 +201,14 @@ public class MainActivity extends AppCompatActivity {
                     ArrayList<String> songs = new ArrayList<>();
                     songs.add(sname);
                     albumSongMap.put(salbum,songs);
+                    albumList.add(salbum);
                 }
 
             }
         }
     }
 
-    /**
-     * function create a mapping for songs with artist and albums
-     */
-    void createArtistAndSongMaps(){
 
-        for (Song song: songDetailList){
-
-
-        }
-
-    }
 
     public static void log(String message){
 
@@ -164,4 +217,17 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    protected void onStop() {
+        super.onStop();
+        MainActivity.log("in Stop");
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        MainActivity.log("in destroy");
+        prefs.edit().putBoolean("firstrun", true).commit();
+    }
 }
